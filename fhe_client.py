@@ -38,7 +38,7 @@ def add(client, path, column, val):
 
     data_buf = np.loadtxt(str(path), delimiter=',', skiprows=1, dtype=np.int64).flatten()
     op_buf = np.zeros((len(data_buf)//len(fields), len(fields)), dtype=np.int64)
-    op_buf[:, column-1] = val
+    op_buf[:, fields.index(column)] = val
 
 
     # Columns are after every n commas minus the first row
@@ -46,7 +46,7 @@ def add(client, path, column, val):
     
 
 def download(client, path):
-    file_len = path.stat().st_size
+    #file_len = path.stat().st_size
     file = client.download_file(str(path))
     HE = Pyfhel()
     HE.from_bytes_context(file.ctx)
@@ -59,10 +59,16 @@ def download(client, path):
     with Path(file.path).open('r') as f:
         reader = csv.reader(f)
         fields = next(reader)
-        file_len -= len(','.join(fields))
+        cols = len(fields)
+        rows = 0
+        for row in reader:
+            rows += 1
+        #print(f"rows = {rows}, cols = {cols}")
+        #file_len -= len(','.join(fields))
+        
     # Decrypt
     cdata = HE.decrypt(ctxt)
-    reshaped = np.reshape(cdata[:file_len//2], (file_len//2//len(fields), len(fields)))
+    reshaped = np.reshape(cdata[:rows*cols], (rows, cols))
     np.savetxt(file.path, reshaped, delimiter=',', fmt="%d", header=','.join(fields), comments='')
 
 
@@ -129,7 +135,7 @@ def main():
             download(client, Path(parts[1]))
             continue
         if parts[0] == 'add':
-            add(client, Path(parts[1]), int(parts[2]), int(parts[3]))
+            add(client, Path(parts[1]), str(parts[2]), int(parts[3]))
             continue    
 
     transport.close()
