@@ -31,4 +31,4 @@ This only works for CSV files where all data values are integers.
 The client currently accepts three commands:
 - `upload <filename>`
 - `download <filename>`
-- `add <filename> <column> <value>` (assumes 1-indexed columns)
+- `add <filename> <column name> <value>`
